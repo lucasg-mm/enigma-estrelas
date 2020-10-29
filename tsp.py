@@ -34,11 +34,9 @@ def acha_subciclos(mat_adj):
                         fila.append(j)
                         # o vértice j faz parte do mesmo componente conexo de marcados[i]
                         aux.add(j)
-            comp_conexos.append(aux)  # adiciona mais um set para a lista
-
-    if len(comp_conexos) != 1:  # se existir mais de um comp. conexo, existem subciclos ilegais e eles são os componentes conexos
-        return comp_conexos
-    return False  # se existir apenas um comp. conexo, este é o próprio ciclo que foi passado como parâmetro => não existem subciclos ilegais
+            if not (0 in aux):             
+                comp_conexos.append(aux)  # adiciona mais um set para a lista
+    return comp_conexos
 
 # Resolve o Problema do Caixeiro-Viajante
 
