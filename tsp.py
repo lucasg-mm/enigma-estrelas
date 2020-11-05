@@ -3,6 +3,8 @@
 
 from collections import deque
 from ortools.sat.python import cp_model
+from math import sqrt
+
 
 # Dada uma matriz mat_adj, a função abaixo retorna uma lista de sets, cada um contendo os índices
 # que representam os vértices que formam um subciclo. Se não houver subciclos, retorna False. A
@@ -34,7 +36,7 @@ def acha_subciclos(mat_adj):
                         fila.append(j)
                         # o vértice j faz parte do mesmo componente conexo de marcados[i]
                         aux.add(j)
-            if not (0 in aux):             
+            if not (0 in aux):
                 comp_conexos.append(aux)  # adiciona mais um set para a lista
     return comp_conexos
 
@@ -64,7 +66,7 @@ def resolve_tsp(distancias):
     obj_termos = []
     for i in range(num_galaxias):
         for j in range(num_galaxias):
-            obj_termos.append(int(10*distancias[i][j])*x[i][j])
+            obj_termos.append(int(distancias[i][j])*x[i][j])
     model.Minimize(sum(obj_termos))
 
     # -- resolve
@@ -97,21 +99,39 @@ def resolve_tsp(distancias):
         for j in range(num_galaxias):
             if solver.BooleanValue(x[i][j]):
                 print(f"De {i} para {j} -> custo: {distancias[i][j]}")
-    print(f"Custo total: {solver.ObjectiveValue() / 10}")
+    print(f"Custo total: {solver.ObjectiveValue()}")
 
+# calcula a distância euclideana 2d entre dois pontos representados por tuplas
+def dist_euclid(a, b):
+    return sqrt(((a[0] - b[0])**2) + ((a[1] - b[1])**2))
+
+# constrói a matriz de distâncias
+def constroi_matriz(coords):
+    num_vertices = len(coords)
+    distancias = []
+    for i in range(num_vertices):
+        distancias.append([])
+        for j in range(num_vertices):
+            distancias[i].append(round(dist_euclid(coords[i], coords[j])))
+    return distancias        
+
+# pega input e retorna numa lista de tuplas
+def get_input(num_vertices):
+    coords = []  # lista que contém cada coordenada em uma trupla
+
+    for _ in range(num_vertices):
+        coord = input()  # pega input como string em uma linha só
+        coord = coord.split()  # separa as duas componentes
+        coord = [float(comp) for comp in coord]  # converte cada componenente para float
+        coord = tuple(coord)  # transforma a tupla
+        coords.append(coord)  # coloca na lista maior
+
+    return coords
 
 def main():
-    # -- declara as distâncias entre cada par de galáxias
-    # Exemplo: distancias[i][j] contém a distância da galáxia i à galaxia j
-    distancias = [[0, 33.6, 14.0, 40.9, 14.5, 11.5],
-                  [34.7, 0, 21.7, 13.0, 20.2, 23.4],
-                  [14.8, 21.5, 0, 29.3, 2.0, 3.9],
-                  [41.7, 13.1, 29.4, 0, 27.6, 30.3],
-                  [15.0, 20.2, 2.0, 27.5, 0, 3.9],
-                  [12.0, 22.8, 2.0, 30.1, 4.0, 0]]
-
+    coords = get_input(16)
+    distancias = constroi_matriz(coords)
     resolve_tsp(distancias)
-
 
 if __name__ == '__main__':
     main()
