@@ -1,3 +1,9 @@
+# LUCAS G. M. MIRANDA - 10265892 - lucasgmm@usp.br
+# MARCELA TIEMI SHINZATO - 10276953 - marcelats@usp.br
+# SÉRGIO RICARDO G. B. FILHO - 10408386 - sergiobarbosa@usp.br
+# TIAGO LASCALA AUDE - 8936742 - tiago.aude@usp.br
+
+
 # Resolve uma instância do problema do caixeiro viajante,
 # usando o CP-SAT solver do Google OR-Tools.
 
@@ -36,7 +42,7 @@ def acha_subciclos(mat_adj):
                         fila.append(j)
                         # o vértice j faz parte do mesmo componente conexo de marcados[i]
                         aux.add(j)
-            if not (0 in aux):
+            if 0 not in aux:
                 comp_conexos.append(aux)  # adiciona mais um set para a lista
     return comp_conexos
 
@@ -78,6 +84,7 @@ def resolve_tsp(distancias):
         num_galaxias)] for j in range(num_galaxias)]
     # se a sol_parcial não tem nenhum subciclo, ela é a correta!
     subciclos = acha_subciclos(sol_parcial)
+
     while subciclos:
         # se a solução parcial possui subciclos, adiciona restrições para detectar
         # os subciclos achados, e resolve o problema novamente, achando outra solução parcial
@@ -94,6 +101,7 @@ def resolve_tsp(distancias):
         # se a sol_parcial não tem nenhum subciclo, ela é a correta!
         subciclos = acha_subciclos(sol_parcial)
 
+    print("-->SOLUÇÃO FINAL")
     print("Solução encontrada:")
     for i in range(num_galaxias):
         for j in range(num_galaxias):
@@ -101,11 +109,15 @@ def resolve_tsp(distancias):
                 print(f"De {i} para {j} -> custo: {distancias[i][j]}")
     print(f"Custo total: {solver.ObjectiveValue()}")
 
-# calcula a distância euclideana 2d entre dois pontos representados por tuplas
+# calcula a distância euclidiana 2d entre dois pontos representados por tuplas
+
+
 def dist_euclid(a, b):
     return sqrt(((a[0] - b[0])**2) + ((a[1] - b[1])**2))
 
 # constrói a matriz de distâncias
+
+
 def constroi_matriz(coords):
     num_vertices = len(coords)
     distancias = []
@@ -113,25 +125,31 @@ def constroi_matriz(coords):
         distancias.append([])
         for j in range(num_vertices):
             distancias[i].append(round(dist_euclid(coords[i], coords[j])))
-    return distancias        
+    return distancias
 
 # pega input e retorna numa lista de tuplas
-def get_input(num_vertices):
-    coords = []  # lista que contém cada coordenada em uma trupla
+
+
+def get_input():
+    num_vertices = int(input())
+    coords = []  # lista que contém cada coordenada em uma tupla
 
     for _ in range(num_vertices):
         coord = input()  # pega input como string em uma linha só
         coord = coord.split()  # separa as duas componentes
-        coord = [float(comp) for comp in coord]  # converte cada componenente para float
+        # converte cada componenente para float
+        coord = [float(comp) for comp in coord]
         coord = tuple(coord)  # transforma a tupla
         coords.append(coord)  # coloca na lista maior
 
     return coords
 
+
 def main():
-    coords = get_input(16)
+    coords = get_input()
     distancias = constroi_matriz(coords)
     resolve_tsp(distancias)
+
 
 if __name__ == '__main__':
     main()
