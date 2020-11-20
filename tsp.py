@@ -63,7 +63,7 @@ def resolve_tsp(coords):
     for j in range(num_galaxias):
         solver.Add(sum(y[i][j] for i in range(num_galaxias)) == 1)
 
-    print(f"Número de restrições = {solver.NumConstraints()}")
+    print(f"Número de restrições (inicialmente) = {solver.NumConstraints()}")
 
     # -> definindo a função objetivo
     distancias = []
@@ -101,13 +101,16 @@ def resolve_tsp(coords):
         # se a sol_parcial não tem nenhum subciclo, ela é a correta!
         subciclos = acha_subciclos(sol_parcial)
 
+    custo_total = 0
     print("-->SOLUÇÃO FINAL")
     print("Solução encontrada:")
     for i in range(num_galaxias):
         for j in range(num_galaxias):
             if y[i][j].solution_value():
                 print(f"De {i} para {j} -> custo: {distancias[i][j]}")
-    print(f"Custo total: {solver.Objective().Value()}")       
+                custo_total += distancias[i][j]
+    print(f"Custo total: {solver.Objective().Value()}")
+    print(f"Custo total: {custo_total}")       
 
 
 def dist_euclid(a, b):
@@ -132,6 +135,7 @@ def get_input():
         coord = tuple(coord)  # transforma a tupla
         coords.append(coord)  # coloca na lista maior
 
+    print("dummy")
     return coords
 
 
