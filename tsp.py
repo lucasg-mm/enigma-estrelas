@@ -2,7 +2,8 @@ from __future__ import print_function
 from collections import deque
 from ortools.linear_solver import pywraplp
 from math import sqrt
-# import igraph
+
+import solution_plotter
 
 
 def acha_subciclos(mat_adj):
@@ -45,10 +46,6 @@ def resolve_tsp(coords):
     """
     Resolve o Problema do Caixeiro-Viajante.
     """
-
-    # para plotar o grafo final:
-    # g = igraph.Graph(directed=True)
-    # g.add_vertices(len(coords))
 
     solver = pywraplp.Solver.CreateSolver('SCIP')  # define o solver
     num_galaxias = len(coords)  # armazena o número de galáxias
@@ -108,6 +105,7 @@ def resolve_tsp(coords):
         # se a sol_parcial não tem nenhum subciclo, ela é a correta!
         subciclos = acha_subciclos(sol_parcial)
 
+    solucao = {}
     custo_total = 0
     print("-->SOLUÇÃO FINAL")
     print("Solução encontrada:")
@@ -116,9 +114,11 @@ def resolve_tsp(coords):
             if y[i][j].solution_value():
                 print(f"De {i} para {j} -> custo: {distancias[i][j]}")
                 custo_total += distancias[i][j]
-                # g.add_edge(i, j)
+                solucao[(i, j)] = distancias[i][j]
+                
     print(f"Custo total: {round(solver.Objective().Value())}")
-    # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords) 
+    
+    return solucao
 
 
 def dist_euclid(a, b):
@@ -146,10 +146,14 @@ def get_input():
     return coords
 
 
-def main():
+def main(plotar_solucao=False):
     coords = get_input()
-    resolve_tsp(coords)
+    solucao = resolve_tsp(coords)
+
+    if plotar_solucao and len(coords) < 100:
+        solution_plotter.plot_dir_graph(coords, list(solucao.keys()))
+
 
 
 if __name__ == '__main__':
-    main()
+    main(plotar_solucao = True)
