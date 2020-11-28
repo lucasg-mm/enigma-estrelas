@@ -144,7 +144,7 @@ def resolve_tsp(coords):
                 custo_total += distancias[i][j]
                 # g.add_edge(i, j)
     print(f"Custo total: {round(solver.Objective().Value())}")
-    # igraph.plot(g, vertex_label=list(range(num_galaxias))) 
+    # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords) 
 
 
 def dist_euclid(a, b):
