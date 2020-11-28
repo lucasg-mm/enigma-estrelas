@@ -2,10 +2,12 @@ from __future__ import print_function
 from collections import deque
 from ortools.linear_solver import pywraplp
 from math import sqrt
+# import igraph
 
 
 def acha_subciclos(mat_adj):
-    """Dada uma matriz mat_adj, a função abaixo retorna uma lista de sets, cada um contendo os índices
+    """
+    Dada uma matriz mat_adj, a função abaixo retorna uma lista de sets, cada um contendo os índices
     que representam os vértices que formam um subciclo. Se não houver subciclos, retorna False. A
     matriz mat_adj deve ser uma matriz adjacências de um grafo não ponderado, ou seja, mat_adj[i][j] == 1,
     se existe uma aresta entre os vértices i e j.
@@ -43,6 +45,11 @@ def resolve_tsp(coords):
     """
     Resolve o Problema do Caixeiro-Viajante.
     """
+
+    # para plotar o grafo final:
+    # g = igraph.Graph(directed=True)
+    # g.add_vertices(len(coords))
+
     solver = pywraplp.Solver.CreateSolver('SCIP')  # define o solver
     num_galaxias = len(coords)  # armazena o número de galáxias
 
@@ -71,7 +78,7 @@ def resolve_tsp(coords):
     for i in range(num_galaxias):
         distancias.append([])
         for j in range(num_galaxias):
-            distancias[i].append(round(dist_euclid(coords[i], coords[j])))
+            distancias[i].append(int(round(dist_euclid(coords[i], coords[j]))))
             parcelas_obj.append(y[i][j] * distancias[i][j])
     solver.Minimize(sum(parcelas_obj))
 
@@ -109,8 +116,9 @@ def resolve_tsp(coords):
             if y[i][j].solution_value():
                 print(f"De {i} para {j} -> custo: {distancias[i][j]}")
                 custo_total += distancias[i][j]
-    print(f"Custo total: {solver.Objective().Value()}")
-    print(f"Custo total: {custo_total}")       
+                # g.add_edge(i, j)
+    print(f"Custo total: {round(solver.Objective().Value())}")
+    # igraph.plot(g, vertex_label=list(range(num_galaxias))) 
 
 
 def dist_euclid(a, b):
@@ -135,7 +143,6 @@ def get_input():
         coord = tuple(coord)  # transforma a tupla
         coords.append(coord)  # coloca na lista maior
 
-    print("dummy")
     return coords
 
 
