@@ -1,8 +1,9 @@
 from __future__ import print_function
 from collections import deque
 from ortools.linear_solver import pywraplp
-from math import sqrt
+from math import sqrt, inf
 from time import time
+from copy import deepcopy
 # import igraph
 
 
@@ -43,6 +44,23 @@ def acha_subciclos(mat_adj):
     return comp_conexos
 
 
+def nearest_neighboors(custos):
+    sol = []
+    ind_linha = 0
+
+    for linha in custos:
+        if sol:
+            for indices in sol:
+                linha[indices[1]] = inf
+                if ind_linha == indices[1]:
+                    linha[indices[0]] = inf    
+        ind_coluna = linha.index(min(linha))
+        sol.append((ind_linha, ind_coluna))
+        ind_linha += 1
+
+    return sol
+
+
 def resolve_tsp(coords):
     """
     Resolve o Problema do Caixeiro-Viajante.
@@ -63,7 +81,7 @@ def resolve_tsp(coords):
             if j >= i + 1:
                 y[i].append(solver.IntVar(0, 1, f"y[{i}][{j}]"))
             else:
-                y[i].append(0)    
+                y[i].append(0.0)    
     print(f"Número de variáveis = {solver.NumVariables()}")
 
     # -> definindo as restrições
@@ -84,14 +102,33 @@ def resolve_tsp(coords):
             if j >= i + 1:
                 distancias[i].append(int(round(dist_euclid(coords[i], coords[j]))))
                 parcelas_obj.append(y[i][j] * distancias[i][j])
+            elif j < i:
+                distancias[i].append(int(round(dist_euclid(coords[i], coords[j]))))   
             else:
-                distancias[i].append(0)    
-    solver.Minimize(sum(parcelas_obj))
+                distancias[i].append(inf)   
+
+    sol = nearest_neighboors(deepcopy(distancias))
+    variables = []
+    values = []
+    for i in range(num_galaxias):
+        for j in range(i + 1, num_galaxias):
+            if (i, j) in sol or (j, i) in sol:
+                values.append(1.0)
+            else:
+                values.append(0.0)
+            variables.append(y[i][j])    
+
+    solver.SetHint(variables, values)
+
+    solver.Minimize(sum(parcelas_obj))  # obtém a primeira solução
 
     # -> resolve
-    timeout = time() + 60*10  # seta timeout de 10 minutos (em segundos)
+    t_inicio = time()
+    timeout = t_inicio + 60*60  # define timeout de 30 minutos (em segundos)
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
+    print("Resolvendo...")
     solver.Solve()
+    print("Resolveu...")
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
 
     # obtém a solução parcial na forma de matriz
@@ -120,7 +157,10 @@ def resolve_tsp(coords):
             solver.Add(sum(aux_list) <= len(subciclo) - 1)
 
         solver.set_time_limit(max(int((timeout - time())*1000), 0))
+        solver.SetHint(variables, values)
+        print("Resolvendo...")
         solver.Solve()  # resolve novamente
+        print("Resolveu...")
         sol_parcial = []
         for i in range(num_galaxias):
             sol_parcial.append([])
@@ -134,6 +174,7 @@ def resolve_tsp(coords):
         # se a sol_parcial não tem nenhum subciclo, ela é a correta!
         subciclos = acha_subciclos(sol_parcial)
 
+    t_final = time()
     custo_total = 0
     print("-->SOLUÇÃO FINAL")
     print("Solução encontrada:")
@@ -144,6 +185,7 @@ def resolve_tsp(coords):
                 custo_total += distancias[i][j]
                 # g.add_edge(i, j)
     print(f"Custo total: {round(solver.Objective().Value())}")
+    print(f"Tempo decorrido: {t_final - t_inicio} segundos")
     # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords) 
 
 

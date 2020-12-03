@@ -1,38 +1,13 @@
-0-8
-1-0
-2-4
-3-2
-4-5
-5-6
-6-7
-7-11
-8-3
-9-1
-10-18
-11-10
-12-14
-13-9
-14-19
-15-12
-16-15
-17-16
-18-17
-19-22
-20-13
-21-23
-22-25
-23-27
-24-21
-25-24
-26-30
-27-26
-28-20
-29-28
-30-35
-31-29
-32-37
-33-32
-34-31
-35-33
-36-34
-37-36
+sol_inicial <- Solução obtida pela heurística de nearest neighboors
+sol_inicial <- Melhorar a solução obtida pela heurística de nearest neighboors através da heurística 2-opt
+
+sol <- resolver o problema usando sol_inicial como solução sol_inicial
+
+enquanto sol tiver subciclos
+
+    adiciona restrições dos subciclos encontrados ao modelo
+    sol_fact <- get_fact(sol)  obtém uma solução factível a partir de sol
+    se custo(sol_fact) < custo(sol_inicial)
+        sol_inicial <- sol_fact
+        sol_inicial <- 2-opt(sol_inicial)
+
