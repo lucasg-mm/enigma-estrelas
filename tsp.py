@@ -40,26 +40,68 @@ def acha_subciclos(mat_adj):
             # if 0 not in aux:
             #     comp_conexos.append(aux)  # adiciona mais um set para a lista
             if len(aux) >= 3 and len(aux) <= len(mat_adj) - 1:
-                comp_conexos.append(aux)  # adiciona mais um set para a lista                
+                comp_conexos.append(aux)  # adiciona mais um set para a lista
     return comp_conexos
 
 
-def nearest_neighboors(custos):
-    sol = []
-    ind_linha = 0
+def nearest_neighboors(custos, num_vertices):
+    """
+    Implementação da heurística dos vizinhos mais próximos para obter uma rota que é uma solução
+    factível para o problema de otimização.
+    """
 
-    for linha in custos:
-        if sol:
-            for indices in sol:
-                linha[indices[1]] = inf
-                if ind_linha == indices[1]:
-                    linha[indices[0]] = inf    
-        ind_coluna = linha.index(min(linha))
-        sol.append((ind_linha, ind_coluna))
-        ind_linha += 1
+    rota = []
+    proximo = 0
+    for _ in range(num_vertices+1):
+        rota.append(proximo)  # adiciona mais um elemento à rota
+        atual = proximo
+        # obtém os custos dos próximos nodos possíveis (os ainda não visitados)
+        proximos_possiveis = [
+            custo if custos[atual].index(custo) not in rota else inf for custo in custos[atual]]
+        # obtém o índice do próximo nó a ser visitado
+        proximo = proximos_possiveis.index(min(proximos_possiveis))
 
-    return sol
+    return rota
 
+
+def troca_two_opt(rota, i, k):
+    """
+    Executa a troca durante a execução do 2-opt
+    """
+    nova_rota = rota[:i]
+    nova_rota.extend(rota[i:k+1][::-1])
+    nova_rota.extend(rota[k+1:])
+    return nova_rota
+
+
+# def two_opt(rota, distancias, num_vertices):
+#     """
+#     Implementação da heurística 2-opt.
+#     """
+
+#     for i in range(num_vertices - 2):
+#         for j in range(i, num_vertices):
+#             nova_rota = troca_two_opt(rota, i, j)
+#             d1 = get_custo(nova_rota, distancias)
+#             d2 = get_custo(rota, distancias)
+
+def define_solucao_inicial(solver, rota_inicial, num_vertices, y):
+    """
+    Define uma solução inicial para o modelo a partir de uma dada rota 
+    na forma [0, k, ..., 0].
+    """
+    variaveis = []
+    valores = []
+    rota_inicial = [(rota_inicial[i], rota_inicial[i+1]) for i in range(len(rota_inicial) - 1)]
+    for i in range(num_vertices):
+        for j in range(i + 1, num_vertices):
+            if (i, j) in rota_inicial or (j, i) in rota_inicial:
+                valores.append(1.0)
+            else:
+                valores.append(0.0)
+            variaveis.append(y[i][j])
+
+    solver.SetHint(variaveis, valores)    
 
 def resolve_tsp(coords):
     """
@@ -81,7 +123,7 @@ def resolve_tsp(coords):
             if j >= i + 1:
                 y[i].append(solver.IntVar(0, 1, f"y[{i}][{j}]"))
             else:
-                y[i].append(0.0)    
+                y[i].append(0.0)
     print(f"Número de variáveis = {solver.NumVariables()}")
 
     # -> definindo as restrições
@@ -100,25 +142,18 @@ def resolve_tsp(coords):
         distancias.append([])
         for j in range(num_galaxias):
             if j >= i + 1:
-                distancias[i].append(int(round(dist_euclid(coords[i], coords[j]))))
+                distancias[i].append(
+                    int(round(dist_euclid(coords[i], coords[j]))))
                 parcelas_obj.append(y[i][j] * distancias[i][j])
             elif j < i:
-                distancias[i].append(int(round(dist_euclid(coords[i], coords[j]))))   
+                distancias[i].append(
+                    int(round(dist_euclid(coords[i], coords[j]))))
             else:
-                distancias[i].append(inf)   
+                distancias[i].append(0.0)  
 
-    sol = nearest_neighboors(deepcopy(distancias))
-    variables = []
-    values = []
-    for i in range(num_galaxias):
-        for j in range(i + 1, num_galaxias):
-            if (i, j) in sol or (j, i) in sol:
-                values.append(1.0)
-            else:
-                values.append(0.0)
-            variables.append(y[i][j])    
-
-    solver.SetHint(variables, values)
+    # obtém uma rota inicial usando a heurística dos vizinhos mais próximos
+    rota_inicial = nearest_neighboors(distancias, num_galaxias)
+    define_solucao_inicial(solver, rota_inicial, num_galaxias, y)
 
     solver.Minimize(sum(parcelas_obj))  # obtém a primeira solução
 
@@ -141,7 +176,7 @@ def resolve_tsp(coords):
             elif j == i:
                 sol_parcial[i].append(0.0)
             else:
-                sol_parcial[i].append(y[j][i].solution_value())  
+                sol_parcial[i].append(y[j][i].solution_value())
 
     # se a sol_parcial não tem nenhum subciclo, ela é a correta!
     subciclos = acha_subciclos(sol_parcial)
@@ -157,7 +192,7 @@ def resolve_tsp(coords):
             solver.Add(sum(aux_list) <= len(subciclo) - 1)
 
         solver.set_time_limit(max(int((timeout - time())*1000), 0))
-        solver.SetHint(variables, values)
+        # solver.SetHint(variables, values)
         print("Resolvendo...")
         solver.Solve()  # resolve novamente
         print("Resolveu...")
@@ -170,7 +205,7 @@ def resolve_tsp(coords):
                 elif j == i:
                     sol_parcial[i].append(0.0)
                 else:
-                    sol_parcial[i].append(y[j][i].solution_value())        
+                    sol_parcial[i].append(y[j][i].solution_value())
         # se a sol_parcial não tem nenhum subciclo, ela é a correta!
         subciclos = acha_subciclos(sol_parcial)
 
@@ -186,7 +221,7 @@ def resolve_tsp(coords):
                 # g.add_edge(i, j)
     print(f"Custo total: {round(solver.Objective().Value())}")
     print(f"Tempo decorrido: {t_final - t_inicio} segundos")
-    # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords) 
+    # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords)
 
 
 def dist_euclid(a, b):
