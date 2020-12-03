@@ -74,16 +74,43 @@ def troca_two_opt(rota, i, k):
     return nova_rota
 
 
-# def two_opt(rota, distancias, num_vertices):
-#     """
-#     Implementação da heurística 2-opt.
-#     """
+def two_opt(melhor_rota, distancias, num_vertices):
+    """
+    Implementação da heurística 2-opt.
+    """
 
-#     for i in range(num_vertices - 2):
-#         for j in range(i, num_vertices):
-#             nova_rota = troca_two_opt(rota, i, j)
-#             d1 = get_custo(nova_rota, distancias)
-#             d2 = get_custo(rota, distancias)
+    melhorou = True
+    melhor_distancia = dist_rota(melhor_rota, distancias)
+    print(f"Melhor distância antes: {melhor_distancia}")
+    while melhorou:
+        melhorou = False
+        for i in range(1, num_vertices - 1):
+            for k in range(i+1, num_vertices):
+                nova_rota = troca_two_opt(melhor_rota, i, k)
+                nova_distancia = dist_rota(nova_rota, distancias)
+
+                if nova_distancia < melhor_distancia:
+                    melhorou = True
+                    melhor_rota = nova_rota
+                    melhor_distancia = nova_distancia
+                    break
+                else:
+                    melhorou = False
+            if melhorou:
+                break
+    print(f"Melhor distância depois: {melhor_distancia}")            
+    return melhor_rota
+
+
+def dist_rota(rota, distancias):
+    """
+    Dada uma rota, calcula e retorna a sua distância.
+    """
+    dist = 0
+    for i in range(len(rota) - 1):
+        dist += distancias[rota[i]][rota[i+1]]
+    return dist
+
 
 def define_solucao_inicial(solver, rota_inicial, num_vertices, y):
     """
@@ -92,7 +119,8 @@ def define_solucao_inicial(solver, rota_inicial, num_vertices, y):
     """
     variaveis = []
     valores = []
-    rota_inicial = [(rota_inicial[i], rota_inicial[i+1]) for i in range(len(rota_inicial) - 1)]
+    rota_inicial = [(rota_inicial[i], rota_inicial[i+1])
+                    for i in range(len(rota_inicial) - 1)]
     for i in range(num_vertices):
         for j in range(i + 1, num_vertices):
             if (i, j) in rota_inicial or (j, i) in rota_inicial:
@@ -101,7 +129,8 @@ def define_solucao_inicial(solver, rota_inicial, num_vertices, y):
                 valores.append(0.0)
             variaveis.append(y[i][j])
 
-    solver.SetHint(variaveis, valores)    
+    solver.SetHint(variaveis, valores)
+
 
 def resolve_tsp(coords):
     """
@@ -149,10 +178,13 @@ def resolve_tsp(coords):
                 distancias[i].append(
                     int(round(dist_euclid(coords[i], coords[j]))))
             else:
-                distancias[i].append(0.0)  
+                distancias[i].append(0.0)
 
     # obtém uma rota inicial usando a heurística dos vizinhos mais próximos
     rota_inicial = nearest_neighboors(distancias, num_galaxias)
+    # melhora a rota inicial usando a heurística 2-opt
+    rota_inicial = two_opt(rota_inicial, distancias, num_galaxias)
+    # da rota obtida, definimos uma solução inicial
     define_solucao_inicial(solver, rota_inicial, num_galaxias, y)
 
     solver.Minimize(sum(parcelas_obj))  # obtém a primeira solução
