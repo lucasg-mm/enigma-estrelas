@@ -81,7 +81,7 @@ def two_opt(melhor_rota, distancias, num_vertices):
 
     melhorou = True
     melhor_distancia = dist_rota(melhor_rota, distancias)
-    print(f"Melhor distância antes: {melhor_distancia}")
+    print(f"Custo da solução inicial antes da heurística 2-opt: {melhor_distancia}")
     while melhorou:
         melhorou = False
         for i in range(1, num_vertices - 1):
@@ -98,7 +98,7 @@ def two_opt(melhor_rota, distancias, num_vertices):
                     melhorou = False
             if melhorou:
                 break
-    print(f"Melhor distância depois: {melhor_distancia}")            
+    print(f"Custo da solução inicial depois da heurística 2-opt: {melhor_distancia}")            
     return melhor_rota
 
 
@@ -193,9 +193,9 @@ def resolve_tsp(coords):
     t_inicio = time()
     timeout = t_inicio + 60*60  # define timeout de 30 minutos (em segundos)
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
-    print("Resolvendo...")
+    print("Resolvendo problema relaxado (sem restrições de subciclos ilegais)...")
     solver.Solve()
-    print("Resolveu...")
+    print("Problema resolvido!")
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
 
     # obtém a solução parcial na forma de matriz
@@ -225,9 +225,9 @@ def resolve_tsp(coords):
 
         solver.set_time_limit(max(int((timeout - time())*1000), 0))
         # solver.SetHint(variables, values)
-        print("Resolvendo...")
+        print("Resolvendo problema com mais algumas restrições de subciclos ilegais")
         solver.Solve()  # resolve novamente
-        print("Resolveu...")
+        print("Problema resolvido!")
         sol_parcial = []
         for i in range(num_galaxias):
             sol_parcial.append([])
@@ -252,7 +252,7 @@ def resolve_tsp(coords):
                 custo_total += distancias[i][j]
                 # g.add_edge(i, j)
     print(f"Custo total: {round(solver.Objective().Value())}")
-    print(f"Tempo decorrido: {t_final - t_inicio} segundos")
+    print(f"Tempo decorrido: {round(t_final - t_inicio, 5)} segundos")
     # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords)
 
 
