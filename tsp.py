@@ -197,11 +197,12 @@ def resolve_tsp(coords):
 
     # -> resolve
     t_inicio = time()
-    timeout = t_inicio + 60*30  # define timeout de 30 minutos (em segundos)
+    timeout = t_inicio + 60*30  # define timeout de 30 minutos 
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
     print("Resolvendo problema relaxado (sem restrições de subciclos ilegais)...")
     solver.Solve()
     print("Problema resolvido!")
+    print(f"Custo total: {round(solver.Objective().Value())}")
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
 
     # obtém a solução parcial na forma de matriz
@@ -230,10 +231,11 @@ def resolve_tsp(coords):
             solver.Add(sum(aux_list) <= len(subciclo) - 1)
 
         solver.set_time_limit(max(int((timeout - time())*1000), 0))
-        # solver.SetHint(variables, values)
         print("Resolvendo problema com mais algumas restrições de subciclos ilegais")
         solver.Solve()  # resolve novamente
         print("Problema resolvido!")
+        print(f"Custo total: {round(solver.Objective().Value())}")
+
         sol_parcial = []
         for i in range(num_galaxias):
             sol_parcial.append([])

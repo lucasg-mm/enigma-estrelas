@@ -1,0 +1,32 @@
+Número de variáveis = 269011
+Número de restrições (inicialmente) = 734
+Custo da solução inicial antes da heurística 2-opt: 101185
+Custo da solução inicial depois da heurística 2-opt: 83841
+Resolvendo problema relaxado (sem restrições de subciclos ilegais)...
+Problema resolvido!
+Custo total: 75048
+Resolvendo problema com mais algumas restrições de subciclos ilegais
+Problema resolvido!
+Custo total: 77788
+Resolvendo problema com mais algumas restrições de subciclos ilegais
+Problema resolvido!
+Custo total: 78436
+Resolvendo problema com mais algumas restrições de subciclos ilegais
+Problema resolvido!
+Custo total: 78547
+Resolvendo problema com mais algumas restrições de subciclos ilegais
+Problema resolvido!
+Custo total: 78738
+Resolvendo problema com mais algumas restrições de subciclos ilegais
+Problema resolvido!
+Custo total: 78873
+Resolvendo problema com mais algumas restrições de subciclos ilegais
+Problema resolvido!
+Custo total: 78940
+Resolvendo problema com mais algumas restrições de subciclos ilegais
+Problema resolvido!
+Custo total: 0
+-->SOLUÇÃO FINAL
+Solução encontrada:
+Custo total: 0
+Tempo decorrido: 1812.05931 segundos
