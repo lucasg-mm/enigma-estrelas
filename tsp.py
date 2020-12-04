@@ -44,23 +44,35 @@ def acha_subciclos(mat_adj):
 
 
 def elimina_subciclos(mat_adj, custos, num_vertices):
-    rota = []
-    proximo = 0 
-    for _ in range(num_vertices+1):
+    """
+    Dada uma configuração do grafo com subciclos representada por mat_adj, elimina os
+    subciclos sem aumentar muito o custo. 
+    """
+
+    rota = []  # rota (sem subciclos) que deve ser retornada no final
+    proximo = 0
+    for _ in range(num_vertices+1):  # percorre todos os nós
         rota.append(proximo)
         atual = proximo
-        proximos_possiveis = [i for i in range(num_vertices) if mat_adj[atual][i] == 1 and i not in rota]
-        if proximos_possiveis:
+        # recupera os nós adjacentes no grafo representado por mat_adj (apenas os que ainda não fazem parte da rota)
+        proximos_possiveis = [i for i in range(
+            num_vertices) if mat_adj[atual][i] == 1 and i not in rota]
+        if proximos_possiveis:  # se proximos_possiveis não for vazio...
+            # preserva a aresta de menor peso e elimina a outra (se existir outra)
             if len(proximos_possiveis) == 1 or custos[atual][proximos_possiveis[0]] < custos[atual][proximos_possiveis[1]]:
+                # obtém o índice do próximo nó a ser visitado
                 proximo = proximos_possiveis[0]
             else:
-                proximo = proximos_possiveis[1]    
-        else:
+                # obtém o índice do próximo nó a ser visitado
+                proximo = proximos_possiveis[1]
+        else:  # se proximos_possiveis estiver vazio...
+            # conecta o nó com a aresta de menor peso que o liga com um dos que ainda não fazem parte da rota (como a heurística dos nearest neighboors)
             proximos_possiveis = [
                 custo if custos[atual].index(custo) not in rota else inf for custo in custos[atual]]
             # obtém o índice do próximo nó a ser visitado
             proximo = proximos_possiveis.index(min(proximos_possiveis))
     return rota
+
 
 def nearest_neighboors(custos, num_vertices):
     """
@@ -99,31 +111,40 @@ def two_opt(melhor_rota, distancias, num_vertices):
 
     melhorou = True
     melhor_distancia_rota = dist_rota(melhor_rota, distancias)
-    print(f"Custo da solução inicial antes da heurística 2-opt: {melhor_distancia_rota}")  # imprime a distância do caminho todo para ter uma ideia
+    # imprime a distância do caminho todo para ter uma ideia
+    print(
+        f"Custo da solução inicial antes da heurística 2-opt: {melhor_distancia_rota}")
     while melhorou:  # enquanto o custo estiver melhorando...
         melhorou = False
         for i in range(1, num_vertices - 1):
             for k in range(i+1, num_vertices):
-                melhor_custo_par_aresta = custo_par_aresta(distancias, [melhor_rota[i-1], melhor_rota[i]], [melhor_rota[k], melhor_rota[k+1]])
-                novo_custo_par_aresta = custo_par_aresta(distancias, [melhor_rota[i-1], melhor_rota[k]], [melhor_rota[i], melhor_rota[k+1]])
+                melhor_custo_par_aresta = custo_par_aresta(
+                    distancias, [melhor_rota[i-1], melhor_rota[i]], [melhor_rota[k], melhor_rota[k+1]])
+                novo_custo_par_aresta = custo_par_aresta(
+                    distancias, [melhor_rota[i-1], melhor_rota[k]], [melhor_rota[i], melhor_rota[k+1]])
 
-                if novo_custo_par_aresta < melhor_custo_par_aresta:  # se o custo da troca do par de arestas for menor que o da configuração original do par...
+                # se o custo da troca do par de arestas for menor que o da configuração original do par...
+                if novo_custo_par_aresta < melhor_custo_par_aresta:
                     melhorou = True
-                    melhor_rota = troca_two_opt(melhor_rota, i, k)  # define a melhor rota como a que possui as arestas trocadas
+                    # define a melhor rota como a que possui as arestas trocadas
+                    melhor_rota = troca_two_opt(melhor_rota, i, k)
                     break
                 else:
                     melhorou = False
             if melhorou:
                 break
-    melhor_distancia_rota = dist_rota(melhor_rota, distancias)        
-    print(f"Custo da solução inicial depois da heurística 2-opt: {melhor_distancia_rota}")  # imprime a distância do caminho todo para ter uma ideia da melhora          
-    return melhor_rota    
+    melhor_distancia_rota = dist_rota(melhor_rota, distancias)
+    # imprime a distância do caminho todo para ter uma ideia da melhora
+    print(
+        f"Custo da solução inicial depois da heurística 2-opt: {melhor_distancia_rota}")
+    return melhor_rota
+
 
 def custo_par_aresta(distancias, aresta1, aresta2):
     """
     Retorna o custo de um par de arestas.
     """
-    return distancias[aresta1[0]][aresta1[1]] + distancias[aresta2[0]][aresta2[1]] 
+    return distancias[aresta1[0]][aresta1[1]] + distancias[aresta2[0]][aresta2[1]]
 
 
 def dist_rota(rota, distancias):
@@ -170,7 +191,7 @@ def get_mat_adj(y, num_galaxias):
                 sol_parcial[i].append(0.0)
             else:
                 sol_parcial[i].append(y[j][i].solution_value())
-    return sol_parcial                
+    return sol_parcial
 
 
 def resolve_tsp(coords):
@@ -232,7 +253,7 @@ def resolve_tsp(coords):
 
     # -> resolve
     t_inicio = time()
-    timeout = t_inicio + 60*30  # define timeout de 30 minutos 
+    timeout = t_inicio + 60*30  # define timeout de 30 minutos
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
     print("Resolvendo problema relaxado (sem restrições de subciclos ilegais)...")
     solver.Solve()
@@ -264,11 +285,11 @@ def resolve_tsp(coords):
         if time() < timeout:  # só tenta continuar se o tempo ainda não acabou
             print("Problema resolvido!")
             custo_parcial = round(solver.Objective().Value())
-            print(f"Custo total: {custo_parcial}")            
+            print(f"Custo total: {custo_parcial}")
             # obtém a solução parcial na forma de matriz de adjacências (necessária para achar subciclos)
             sol_parcial = get_mat_adj(y, num_galaxias)
             # se a sol_parcial não tem nenhum subciclo, ela é a correta!
-            subciclos = acha_subciclos(sol_parcial)            
+            subciclos = acha_subciclos(sol_parcial)
 
     if time() >= timeout:
         print("TIMEOUT! Não foi possível gerar uma solução ótima em 30 minutos.")
