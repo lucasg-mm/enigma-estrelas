@@ -3,7 +3,6 @@ from collections import deque
 from ortools.linear_solver import pywraplp
 from math import sqrt, inf
 from time import time
-from copy import deepcopy
 # import igraph
 
 
@@ -43,6 +42,25 @@ def acha_subciclos(mat_adj):
                 comp_conexos.append(aux)  # adiciona mais um set para a lista
     return comp_conexos
 
+
+def elimina_subciclos(mat_adj, custos, num_vertices):
+    rota = []
+    proximo = 0 
+    for _ in range(num_vertices+1):
+        rota.append(proximo)
+        atual = proximo
+        proximos_possiveis = [i for i in range(num_vertices) if mat_adj[atual][i] == 1 and i not in rota]
+        if proximos_possiveis:
+            if len(proximos_possiveis) == 1 or custos[atual][proximos_possiveis[0]] < custos[atual][proximos_possiveis[1]]:
+                proximo = proximos_possiveis[0]
+            else:
+                proximo = proximos_possiveis[1]    
+        else:
+            proximos_possiveis = [
+                custo if custos[atual].index(custo) not in rota else inf for custo in custos[atual]]
+            # obtém o índice do próximo nó a ser visitado
+            proximo = proximos_possiveis.index(min(proximos_possiveis))
+    return rota
 
 def nearest_neighboors(custos, num_vertices):
     """
@@ -219,14 +237,15 @@ def resolve_tsp(coords):
     print("Resolvendo problema relaxado (sem restrições de subciclos ilegais)...")
     solver.Solve()
     print("Problema resolvido!")
-    print(f"Custo total: {round(solver.Objective().Value())}")
+    custo_parcial = round(solver.Objective().Value())
+    print(f"Custo total: {custo_parcial}")
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
 
     # obtém a solução parcial na forma de matriz de adjacências (necessária para achar subciclos)
     sol_parcial = get_mat_adj(y, num_galaxias)
-
     # se a sol_parcial não tem nenhum subciclo, ela é a correta!
     subciclos = acha_subciclos(sol_parcial)
+
     while subciclos and time() < timeout:
         # se a solução parcial possui subciclos, adiciona restrições para detectar
         # os subciclos achados, e resolve o problema novamente, achando outra solução parcial
@@ -241,29 +260,36 @@ def resolve_tsp(coords):
         solver.set_time_limit(max(int((timeout - time())*1000), 0))
         print("Resolvendo problema com mais algumas restrições de subciclos ilegais")
         solver.Solve()  # resolve novamente
-        print("Problema resolvido!")
+
+        if time() < timeout:  # só tenta continuar se o tempo ainda não acabou
+            print("Problema resolvido!")
+            custo_parcial = round(solver.Objective().Value())
+            print(f"Custo total: {custo_parcial}")            
+            # obtém a solução parcial na forma de matriz de adjacências (necessária para achar subciclos)
+            sol_parcial = get_mat_adj(y, num_galaxias)
+            # se a sol_parcial não tem nenhum subciclo, ela é a correta!
+            subciclos = acha_subciclos(sol_parcial)            
+
+    if time() >= timeout:
+        print("TIMEOUT! Não foi possível gerar uma solução ótima em 30 minutos.")
+        print("Eliminando os subciclos da última solução encontrada...")
+        rota = elimina_subciclos(sol_parcial, distancias, num_galaxias)
+        print("Melhorando a solução com a heurística 2-opt...")
+        two_opt(rota, distancias, num_galaxias)
+    else:
+        t_final = time()
+        custo_total = 0
+        print("-->SOLUÇÃO FINAL")
+        print("Solução encontrada:")
+        for i in range(num_galaxias):
+            for j in range(i + 1, num_galaxias):
+                if y[i][j].solution_value():
+                    print(f"{i} -- {j} -> custo: {distancias[i][j]}")
+                    custo_total += distancias[i][j]
+                    # g.add_edge(i, j)
         print(f"Custo total: {round(solver.Objective().Value())}")
-
-        sol_parcial = get_mat_adj(y, num_galaxias)
-        # se a sol_parcial não tem nenhum subciclo, ela é a correta!
-        subciclos = acha_subciclos(sol_parcial)
-
-    # if time() >= timeout:
-    #     print("TIMEOUT")
-
-    t_final = time()
-    custo_total = 0
-    print("-->SOLUÇÃO FINAL")
-    print("Solução encontrada:")
-    for i in range(num_galaxias):
-        for j in range(i + 1, num_galaxias):
-            if y[i][j].solution_value():
-                print(f"{i} -- {j} -> custo: {distancias[i][j]}")
-                custo_total += distancias[i][j]
-                # g.add_edge(i, j)
-    print(f"Custo total: {round(solver.Objective().Value())}")
-    print(f"Tempo decorrido: {round(t_final - t_inicio, 5)} segundos")
-    # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords)
+        print(f"Tempo decorrido: {round(t_final - t_inicio, 5)} segundos")
+        # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords)
 
 
 def dist_euclid(a, b):

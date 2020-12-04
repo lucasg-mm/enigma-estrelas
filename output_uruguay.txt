@@ -16,17 +16,6 @@ Problema resolvido!
 Custo total: 78547
 Resolvendo problema com mais algumas restrições de subciclos ilegais
 Problema resolvido!
-Custo total: 78738
-Resolvendo problema com mais algumas restrições de subciclos ilegais
-Problema resolvido!
-Custo total: 78873
-Resolvendo problema com mais algumas restrições de subciclos ilegais
-Problema resolvido!
-Custo total: 78940
-Resolvendo problema com mais algumas restrições de subciclos ilegais
-Problema resolvido!
-Custo total: 0
--->SOLUÇÃO FINAL
-Solução encontrada:
-Custo total: 0
-Tempo decorrido: 1812.05931 segundos
+Custo total: 83841
+TIMEOUT! Não foi possível gerar uma solução ótima em 30 minutos.
+Eliminando os subciclos da última solução encontrada...
