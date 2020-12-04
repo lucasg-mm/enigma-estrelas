@@ -80,34 +80,37 @@ def two_opt(melhor_rota, distancias, num_vertices):
     """
 
     melhorou = True
-    melhor_distancia = dist_rota(melhor_rota, distancias)
-    count = 0
-    tol = 20
-    print(f"Custo da solução inicial antes da heurística 2-opt: {melhor_distancia}")
-    while melhorou and count < tol:
+    melhor_distancia_rota = dist_rota(melhor_rota, distancias)
+    print(f"Custo da solução inicial antes da heurística 2-opt: {melhor_distancia_rota}")  # imprime a distância do caminho todo para ter uma ideia
+    while melhorou:  # enquanto o custo estiver melhorando...
         melhorou = False
         for i in range(1, num_vertices - 1):
             for k in range(i+1, num_vertices):
-                nova_rota = troca_two_opt(melhor_rota, i, k)
-                nova_distancia = dist_rota(nova_rota, distancias)
+                melhor_custo_par_aresta = custo_par_aresta(distancias, [melhor_rota[i-1], melhor_rota[i]], [melhor_rota[k], melhor_rota[k+1]])
+                novo_custo_par_aresta = custo_par_aresta(distancias, [melhor_rota[i-1], melhor_rota[k]], [melhor_rota[i], melhor_rota[k+1]])
 
-                if nova_distancia < melhor_distancia:
+                if novo_custo_par_aresta < melhor_custo_par_aresta:  # se o custo da troca do par de arestas for menor que o da configuração original do par...
                     melhorou = True
-                    melhor_rota = nova_rota
-                    melhor_distancia = nova_distancia
+                    melhor_rota = troca_two_opt(melhor_rota, i, k)  # define a melhor rota como a que possui as arestas trocadas
                     break
                 else:
                     melhorou = False
             if melhorou:
                 break
-        count += 1    
-    print(f"Custo da solução inicial depois da heurística 2-opt: {melhor_distancia}")            
-    return melhor_rota
+    melhor_distancia_rota = dist_rota(melhor_rota, distancias)        
+    print(f"Custo da solução inicial depois da heurística 2-opt: {melhor_distancia_rota}")  # imprime a distância do caminho todo para ter uma ideia da melhora          
+    return melhor_rota    
+
+def custo_par_aresta(distancias, aresta1, aresta2):
+    """
+    Retorna o custo de um par de arestas.
+    """
+    return distancias[aresta1[0]][aresta1[1]] + distancias[aresta2[0]][aresta2[1]] 
 
 
 def dist_rota(rota, distancias):
     """
-    Dada uma rota, calcula e retorna a sua distância.
+    Dada uma rota, retorna a sua distância.
     """
     dist = 0
     for i in range(len(rota) - 1):
