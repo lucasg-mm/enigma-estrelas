@@ -81,8 +81,10 @@ def two_opt(melhor_rota, distancias, num_vertices):
 
     melhorou = True
     melhor_distancia = dist_rota(melhor_rota, distancias)
+    count = 0
+    tol = 20
     print(f"Custo da solução inicial antes da heurística 2-opt: {melhor_distancia}")
-    while melhorou:
+    while melhorou and count < tol:
         melhorou = False
         for i in range(1, num_vertices - 1):
             for k in range(i+1, num_vertices):
@@ -98,6 +100,7 @@ def two_opt(melhor_rota, distancias, num_vertices):
                     melhorou = False
             if melhorou:
                 break
+        count += 1    
     print(f"Custo da solução inicial depois da heurística 2-opt: {melhor_distancia}")            
     return melhor_rota
 
@@ -191,7 +194,7 @@ def resolve_tsp(coords):
 
     # -> resolve
     t_inicio = time()
-    timeout = t_inicio + 60*60  # define timeout de 30 minutos (em segundos)
+    timeout = t_inicio + 60*30  # define timeout de 30 minutos (em segundos)
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
     print("Resolvendo problema relaxado (sem restrições de subciclos ilegais)...")
     solver.Solve()
