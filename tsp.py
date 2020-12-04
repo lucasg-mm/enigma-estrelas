@@ -3,7 +3,7 @@ from collections import deque
 from ortools.linear_solver import pywraplp
 from math import sqrt, inf
 from time import time
-# import igraph
+import igraph
 
 
 def acha_subciclos(mat_adj):
@@ -194,14 +194,14 @@ def get_mat_adj(y, num_galaxias):
     return sol_parcial
 
 
-def resolve_tsp(coords):
+def resolve_tsp(coords, desenhar=False, lim_minutos=30):
     """
     Resolve o Problema do Caixeiro-Viajante.
     """
 
     # para plotar o grafo final:
-    # g = igraph.Graph()
-    # g.add_vertices(len(coords))
+    g = igraph.Graph()
+    g.add_vertices(len(coords))
 
     solver = pywraplp.Solver.CreateSolver('SCIP')  # define o solver
     num_galaxias = len(coords)  # armazena o número de galáxias
@@ -253,7 +253,7 @@ def resolve_tsp(coords):
 
     # -> resolve
     t_inicio = time()
-    timeout = t_inicio + 60*30  # define timeout de 30 minutos
+    timeout = t_inicio + 60 * lim_minutos  # define timeout
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
     print("Resolvendo problema relaxado (sem restrições de subciclos ilegais)...")
     solver.Solve()
@@ -295,7 +295,7 @@ def resolve_tsp(coords):
 
     if time() >= timeout:
         print("-----------------")
-        print("TIMEOUT! Não foi possível gerar uma solução ótima em 30 minutos.")
+        print(f"TIMEOUT! Não foi possível gerar uma solução ótima em {lim_minutos} minutos.")
         print("Eliminando os subciclos da última solução encontrada...")
         rota = elimina_subciclos(sol_parcial, distancias, num_galaxias)
         print("Melhorando a solução com a heurística 2-opt...")
@@ -309,15 +309,14 @@ def resolve_tsp(coords):
                         for i in range(len(rota) - 1)]
         for i in range(num_galaxias):
             for j in range(i + 1, num_galaxias):
-                if (i, j) in rota_inicial or (j, i) in rota_inicial:
+                if (i, j) in rota or (j, i) in rota:
                     print(f"{i} -- {j} -> custo: {distancias[i][j]}")
-                    # g.add_edge(i, j)
+                    g.add_edge(i, j)
                     custo_total += distancias[i][j]
         print(f"Custo total: {custo_total}")
         print(f"GAP:")
         print(f"Número de nós explorados:")
-        print(f"Tempo decorrido: {round(t_final - t_inicio, 5)} segundos")
-        # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords)             
+        print(f"Tempo decorrido: {round(t_final - t_inicio, 5)} segundos")             
     else:
         t_final = time()
         print("-----------------")
@@ -327,10 +326,11 @@ def resolve_tsp(coords):
             for j in range(i + 1, num_galaxias):
                 if y[i][j].solution_value():
                     print(f"{i} -- {j} -> custo: {distancias[i][j]}")
-                    # g.add_edge(i, j)
+                    g.add_edge(i, j)
         print(f"Custo total: {round(solver.Objective().Value())}")
         print(f"Tempo decorrido: {round(t_final - t_inicio, 5)} segundos")
-        # igraph.plot(g, vertex_label=list(range(num_galaxias)), layout=coords)
+    if desenhar:    
+        igraph.plot(g, layout=coords, vertex_size=5)
 
 
 def dist_euclid(a, b):
@@ -360,7 +360,7 @@ def get_input():
 
 def main():
     coords = get_input()
-    resolve_tsp(coords)
+    resolve_tsp(coords, desenhar=True, lim_minutos=30)
 
 
 if __name__ == '__main__':
