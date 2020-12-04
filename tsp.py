@@ -138,6 +138,23 @@ def define_solucao_inicial(solver, rota_inicial, num_vertices, y):
     solver.SetHint(variaveis, valores)
 
 
+def get_mat_adj(y, num_galaxias):
+    """
+    A partir de uma solução y, retorna a matriz de adjacências correspondente.
+    """
+    sol_parcial = []
+    for i in range(num_galaxias):
+        sol_parcial.append([])
+        for j in range(num_galaxias):
+            if j >= i + 1:
+                sol_parcial[i].append(y[i][j].solution_value())
+            elif j == i:
+                sol_parcial[i].append(0.0)
+            else:
+                sol_parcial[i].append(y[j][i].solution_value())
+    return sol_parcial                
+
+
 def resolve_tsp(coords):
     """
     Resolve o Problema do Caixeiro-Viajante.
@@ -205,17 +222,8 @@ def resolve_tsp(coords):
     print(f"Custo total: {round(solver.Objective().Value())}")
     solver.set_time_limit(max(int((timeout - time())*1000), 0))
 
-    # obtém a solução parcial na forma de matriz
-    sol_parcial = []
-    for i in range(num_galaxias):
-        sol_parcial.append([])
-        for j in range(num_galaxias):
-            if j >= i + 1:
-                sol_parcial[i].append(y[i][j].solution_value())
-            elif j == i:
-                sol_parcial[i].append(0.0)
-            else:
-                sol_parcial[i].append(y[j][i].solution_value())
+    # obtém a solução parcial na forma de matriz de adjacências (necessária para achar subciclos)
+    sol_parcial = get_mat_adj(y, num_galaxias)
 
     # se a sol_parcial não tem nenhum subciclo, ela é a correta!
     subciclos = acha_subciclos(sol_parcial)
@@ -236,18 +244,12 @@ def resolve_tsp(coords):
         print("Problema resolvido!")
         print(f"Custo total: {round(solver.Objective().Value())}")
 
-        sol_parcial = []
-        for i in range(num_galaxias):
-            sol_parcial.append([])
-            for j in range(num_galaxias):
-                if j >= i + 1:
-                    sol_parcial[i].append(y[i][j].solution_value())
-                elif j == i:
-                    sol_parcial[i].append(0.0)
-                else:
-                    sol_parcial[i].append(y[j][i].solution_value())
+        sol_parcial = get_mat_adj(y, num_galaxias)
         # se a sol_parcial não tem nenhum subciclo, ela é a correta!
         subciclos = acha_subciclos(sol_parcial)
+
+    # if time() >= timeout:
+    #     print("TIMEOUT")
 
     t_final = time()
     custo_total = 0
