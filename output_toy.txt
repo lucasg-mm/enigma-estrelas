@@ -1,0 +1,17 @@
+----- Sem heurística -----
+Número de variáveis = 10
+Número de restrições (inicialmente) = 5
+Resolvendo problema relaxado (sem restrições de subciclos ilegais)...
+Problema resolvido!
+Custo total: 1386
+-----------------
+-->SOLUÇÃO FINAL (ÓTIMA)
+Solução encontrada:
+0 -- 1 -> custo: 235
+0 -- 4 -> custo: 425
+1 -- 2 -> custo: 286
+2 -- 3 -> custo: 316
+3 -- 4 -> custo: 124
+Custo total: 1386
+Tempo decorrido: 0.00086 segundos
+nos percorridos:  1
