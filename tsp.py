@@ -194,7 +194,7 @@ def get_mat_adj(y, num_galaxias):
     return sol_parcial
 
 
-def resolve_tsp(coords, desenhar=False, lim_minutos=30):
+def resolve_tsp(coords, desenhar=False, lim_minutos=30, heuristica=None):
     """
     Resolve o Problema do Caixeiro-Viajante.
     """
@@ -242,12 +242,14 @@ def resolve_tsp(coords, desenhar=False, lim_minutos=30):
             else:
                 distancias[i].append(0.0)
 
-    # obtém uma rota inicial usando a heurística dos vizinhos mais próximos
-    rota_inicial = nearest_neighboors(distancias, num_galaxias)
-    # melhora a rota inicial usando a heurística 2-opt
-    rota_inicial = two_opt(rota_inicial, distancias, num_galaxias)
-    # da rota obtida, definimos uma solução inicial
-    define_solucao_inicial(solver, rota_inicial, num_galaxias, y)
+    if heuristica != None:
+        # obtém uma rota inicial usando a heurística dos vizinhos mais próximos
+        rota_inicial = nearest_neighboors(distancias, num_galaxias)
+        if heuristica == "2-opt":
+            # melhora a rota inicial usando a heurística 2-opt
+            rota_inicial = two_opt(rota_inicial, distancias, num_galaxias)
+        # da rota obtida, definimos uma solução inicial
+        define_solucao_inicial(solver, rota_inicial, num_galaxias, y)
 
     solver.Minimize(sum(parcelas_obj))  # obtém a primeira solução
 
@@ -258,6 +260,7 @@ def resolve_tsp(coords, desenhar=False, lim_minutos=30):
     print("Resolvendo problema relaxado (sem restrições de subciclos ilegais)...")
     solver.Solve()
 
+    subciclos = False
     if time() < timeout:  # só tenta continuar se o tempo ainda não acabou
         print("Problema resolvido!")
         custo_parcial = round(solver.Objective().Value())
@@ -269,7 +272,7 @@ def resolve_tsp(coords, desenhar=False, lim_minutos=30):
         # se a sol_parcial não tem nenhum subciclo, ela é a correta!
         subciclos = acha_subciclos(sol_parcial)
 
-    while subciclos and time() < timeout:
+    while time() < timeout and subciclos:
         # se a solução parcial possui subciclos, adiciona restrições para detectar
         # os subciclos achados, e resolve o problema novamente, achando outra solução parcial
         for subciclo in subciclos:
@@ -292,7 +295,8 @@ def resolve_tsp(coords, desenhar=False, lim_minutos=30):
             sol_parcial = get_mat_adj(y, num_galaxias)
             # se a sol_parcial não tem nenhum subciclo, ela é a correta!
             subciclos = acha_subciclos(sol_parcial)
-
+    caminho = []
+    custo_total = 0
     if time() >= timeout:
         print("-----------------")
         print(f"TIMEOUT! Não foi possível gerar uma solução ótima em {lim_minutos} minutos.")
@@ -310,12 +314,14 @@ def resolve_tsp(coords, desenhar=False, lim_minutos=30):
         for i in range(num_galaxias):
             for j in range(i + 1, num_galaxias):
                 if (i, j) in rota or (j, i) in rota:
-                    print(f"{i} -- {j} -> custo: {distancias[i][j]}")
+                    #print(f"{i} -- {j} -> custo: {distancias[i][j]}")
                     g.add_edge(i, j)
                     custo_total += distancias[i][j]
+                    caminho.append( (i, j, distancias[i][j]) )
         print(f"Custo total: {custo_total}")
         print(f"GAP:")
-        print(f"Número de nós explorados:")
+        num_nos = solver.nodes()
+        print("Número de nós explorados: ", num_nos)
         print(f"Tempo decorrido: {round(t_final - t_inicio, 5)} segundos")             
     else:
         t_final = time()
@@ -325,12 +331,18 @@ def resolve_tsp(coords, desenhar=False, lim_minutos=30):
         for i in range(num_galaxias):
             for j in range(i + 1, num_galaxias):
                 if y[i][j].solution_value():
-                    print(f"{i} -- {j} -> custo: {distancias[i][j]}")
+                    #print(f"{i} -- {j} -> custo: {distancias[i][j]}")
                     g.add_edge(i, j)
+                    caminho.append( (i, j, distancias[i][j]) )
+        custo_total = round(solver.Objective().Value())
         print(f"Custo total: {round(solver.Objective().Value())}")
         print(f"Tempo decorrido: {round(t_final - t_inicio, 5)} segundos")
+        num_nos = solver.nodes()
+        print("nos percorridos: ",num_nos)
     if desenhar:    
         igraph.plot(g, layout=coords, vertex_size=5)
+    
+    return custo_total, caminho
 
 
 def dist_euclid(a, b):
@@ -360,7 +372,16 @@ def get_input():
 
 def main():
     coords = get_input()
-    resolve_tsp(coords, desenhar=True, lim_minutos=30)
+    print("----- Sem heurística -----")
+    resolve_tsp(coords, desenhar=False, lim_minutos=30)
+    #print ("################")
+    #print()
+    #print("----- Vizinhos mais proximos -----")
+    #resolve_tsp(coords, desenhar=False, lim_minutos=30, heuristica="nn")
+    #print ("################")
+    #print()
+    #print("----- Vizinhos mais proximos + 2-OPT -----")
+    #resolve_tsp(coords, desenhar=False, lim_minutos=30, heuristica="2-opt")
 
 
 if __name__ == '__main__':
